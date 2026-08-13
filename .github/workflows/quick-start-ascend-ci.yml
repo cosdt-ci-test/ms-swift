@@ -1,5 +1,8 @@
 name: Ascend Quick Start (NPU)
 
+# (re-parse trigger — touch the file to invalidate GitHub's workflow
+# validation cache after a syntax error fix; safe to remove later)
+
 # Single workflow that handles the Ascend Quick Start doc test:
 #   1. Every hour: lightweight monitor (hash doc / release / commit).
 #   2. If any of those change, install ms-swift from the new commit
