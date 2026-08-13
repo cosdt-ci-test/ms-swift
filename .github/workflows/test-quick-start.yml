@@ -92,25 +92,41 @@ jobs:
           fetch-depth: 1
           show-progress: false
 
-      - name: Overlay fork's tests/docs/ onto upstream
+      - name: Install upstream ms-swift from source
+        env:
+          SWIFT_NPU_E2E: '1'
         run: |
-          mkdir -p ms-swift/tests/docs
-          cp -r ${{ github.workspace }}/tests/docs/. ms-swift/tests/docs/
-          ls -la ms-swift/tests/docs/
+          # Install the upstream tree into the runner's Python env so the
+          # test in this fork can `import swift` / run `swift` CLI.
+          pip install -e ./ms-swift
 
-      - name: 跑 quick start 测试（test setUp 会装 ms-swift）
+      - name: 跑 quick start 测试
         id: test
-        working-directory: ms-swift
         env:
           SWIFT_NPU_E2E: '1'
           UPSTREAM_REF: ${{ env.REF }}
           UPSTREAM_COMMIT: ${{ steps.upstream-commit.outputs.sha }}
+          MS_SWIFT_DIR: ${{ github.workspace }}/ms-swift
         run: |
           python -m unittest tests.docs.test_quick_start_ascend -v 2>&1 | tee /tmp/unittest.log
 
       - name: 汇总测试结果
         if: always()
-        working-directory: ms-swift
+        env:
+          UPSTREAM_COMMIT: ${{ steps.upstream-commit.outputs.sha }}
+        run: |
+          echo "============================================================"
+          echo "QUICK START TEST SUMMARY"
+          echo "  Upstream repo:    ${{ env.UPSTREAM_REPO }}"
+          echo "  Upstream ref:     ${{ env.REF }}"
+          echo "  Upstream commit:  ${{ steps.upstream-commit.outputs.sha }}"
+          echo "  Trigger reason:   ${{ env.REASON }}"
+          echo "------------------------------------------------------------"
+          if [ -f /tmp/unittest.log ]; then
+            grep -E '^Ran [0-9]+ test' /tmp/unittest.log | tail -n 1 || true
+            grep -E '^(OK|FAILED)' /tmp/unittest.log | tail -n 1 || true
+          fi
+          echo "============================================================"
         run: |
           echo "============================================================"
           echo "QUICK START TEST SUMMARY"
