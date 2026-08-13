@@ -100,17 +100,14 @@ jobs:
           cp -r ../swift-fork/tests/docs/. tests/docs/
           ls -la tests/docs/
 
-      - name: 装 ms-swift 并跑测试
+      - name: 跑 quick start 测试（test setUp 会装 ms-swift）
         id: test
         working-directory: ms-swift
         env:
-          MODELSCOPE_SDK_DEBUG: 'True'
-          SWIFT_CI_USE_NPU: 'True'
           SWIFT_NPU_E2E: '1'
           UPSTREAM_REF: ${{ env.REF }}
           UPSTREAM_COMMIT: ${{ steps.upstream-commit.outputs.sha }}
         run: |
-          bash .dev_scripts/ci_container_test.sh
           python -m unittest tests.docs.test_quick_start_ascend -v 2>&1 | tee /tmp/unittest.log
 
       - name: 汇总测试结果
