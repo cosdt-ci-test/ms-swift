@@ -1,4 +1,4 @@
-name: quick-start-ascend-ci
+name: Ascend Quick Start (NPU)
 
 # Single workflow that handles the Ascend Quick Start doc test:
 #   1. Every hour: lightweight monitor (hash doc / release / commit).
