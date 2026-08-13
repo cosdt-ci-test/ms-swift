@@ -81,7 +81,6 @@ jobs:
           sed -Ei 's@(ports|archive).ubuntu.com@cache-service.nginx-pypi-cache.svc.cluster.local:8081@g' /etc/apt/sources.list
           pip config set global.index-url http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
           pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
-          pip install uv
 
       - name: Checkout upstream at ${{ env.REF }}
         id: upstream-commit

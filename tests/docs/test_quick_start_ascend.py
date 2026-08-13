@@ -258,14 +258,15 @@ class TestQuickStartAscendEndToEnd(unittest.TestCase):
         os.environ.setdefault('UPSTREAM_REF', cls.upstream_ref)
         os.environ.setdefault('UPSTREAM_COMMIT', cls.upstream_commit)
         # The Quick Start's "install ms-swift" step is part of what
-        # we're testing. Run it here from inside the upstream checkout
-        # so the test reflects a fresh install of the upstream tree.
+        # we're testing. Install from the upstream source tree so the
+        # test reflects a fresh install of the exact ref under test
+        # (works for both main and tags — tags aren't necessarily
+        # published to PyPI yet, and main never is).
         ms_swift_dir = Path(os.environ.get('MS_SWIFT_DIR', 'ms-swift'))
         if (ms_swift_dir / 'setup.py').exists() or (ms_swift_dir / 'pyproject.toml').exists():
             subprocess.run(
                 ['pip', 'install', '-e', '.'],
                 cwd=str(ms_swift_dir),
-                env={**os.environ, 'PIP_NO_BUILD_ISOLATION': '0'},
                 check=True,
             )
         if not cls.blocks:
