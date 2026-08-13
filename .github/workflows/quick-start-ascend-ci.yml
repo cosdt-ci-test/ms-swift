@@ -39,7 +39,7 @@ permissions:
 env:
   UPSTREAM_REPO: ${{ vars.UPSTREAM_REPO || inputs.upstream_repo || 'modelscope/ms-swift' }}
   UPSTREAM_REF_DEFAULT: ${{ inputs.upstream_ref || 'main' }}
-  MONITORED_DOC_URL: ${{ vars.MONITORED_DOC_URL || format('https://raw.githubusercontent.com/{0}/main/docs/source/GetStarted/Quick-start-Ascend.md', env.UPSTREAM_REPO) }}
+  MONITORED_DOC_URL: ${{ vars.MONITORED_DOC_URL || 'https://raw.githubusercontent.com/cosdt-ci-test/ms-swift/main/docs/source/GetStarted/Quick-start-Ascend.md' }}
   GH_API: https://api.github.com
 
 jobs:
