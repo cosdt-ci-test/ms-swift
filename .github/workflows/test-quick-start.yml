@@ -82,31 +82,31 @@ jobs:
           pip config set global.index-url http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
           pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
 
-      - name: Checkout upstream at ${{ env.REF }}
+      - name: Resolve upstream commit SHA
         id: upstream-commit
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.UPSTREAM_REPO }}
-          ref: ${{ env.REF }}
-          path: ms-swift
-          fetch-depth: 1
-          show-progress: false
-
-      - name: Install upstream ms-swift from source
-        env:
-          SWIFT_NPU_E2E: '1'
+        # When ``REF`` is a tag, resolve it to the actual commit so the
+        # test pins to a specific SHA. When it's a branch (``main``),
+        # just record the current HEAD — the test will install by
+        # commit SHA anyway, so the recorded value reflects what was
+        # actually tested.
         run: |
-          # Install the upstream tree into the runner's Python env so the
-          # test in this fork can `import swift` / run `swift` CLI.
-          pip install -e ./ms-swift
+          SHA=$(curl -fsSL "${{ env.GH_API }}/repos/${{ env.UPSTREAM_REPO }}/commits/${{ env.REF }}" \
+            | jq -r '.sha // empty')
+          if [ -z "$SHA" ]; then
+            echo "::error::failed to resolve ${{ env.REF }} to a commit"
+            exit 1
+          fi
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "Upstream commit: $SHA"
 
       - name: 跑 quick start 测试
         id: test
         env:
           SWIFT_NPU_E2E: '1'
+          UPSTREAM_REPO: ${{ env.UPSTREAM_REPO }}
           UPSTREAM_REF: ${{ env.REF }}
           UPSTREAM_COMMIT: ${{ steps.upstream-commit.outputs.sha }}
-          MS_SWIFT_DIR: ${{ github.workspace }}/ms-swift
+          REASON: ${{ env.REASON }}
         run: |
           python -m unittest tests.docs.test_quick_start_ascend -v 2>&1 | tee /tmp/unittest.log
 

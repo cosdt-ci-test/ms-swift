@@ -250,25 +250,27 @@ class TestQuickStartAscendEndToEnd(unittest.TestCase):
     def setUpClass(cls):
         cls.doc_path = resolve_doc_path()
         cls.blocks = parse_blocks(cls.doc_path.read_text(encoding='utf-8'))
-        # Record the upstream ref / commit being tested. These are set
-        # by the CI workflow before invoking unittest; fall back to
-        # placeholders when running outside CI.
-        cls.upstream_ref = os.environ.get('UPSTREAM_REF', 'local')
-        cls.upstream_commit = os.environ.get('UPSTREAM_COMMIT', 'local')
+        # Record the upstream ref / commit being tested. The CI
+        # workflow sets these before invoking unittest; when running
+        # outside CI both are unset and the test is skipped below.
+        cls.upstream_ref = os.environ.get('UPSTREAM_REF', '')
+        cls.upstream_commit = os.environ.get('UPSTREAM_COMMIT', '')
+        if not cls.upstream_ref or not cls.upstream_commit:
+            raise unittest.SkipTest(
+                'end-to-end requires UPSTREAM_REF and UPSTREAM_COMMIT '
+                '(set by the CI workflow)')
         os.environ.setdefault('UPSTREAM_REF', cls.upstream_ref)
         os.environ.setdefault('UPSTREAM_COMMIT', cls.upstream_commit)
         # The Quick Start's "install ms-swift" step is part of what
-        # we're testing. Install from the upstream source tree so the
-        # test reflects a fresh install of the exact ref under test
-        # (works for both main and tags — tags aren't necessarily
-        # published to PyPI yet, and main never is).
-        ms_swift_dir = Path(os.environ.get('MS_SWIFT_DIR', 'ms-swift'))
-        if (ms_swift_dir / 'setup.py').exists() or (ms_swift_dir / 'pyproject.toml').exists():
-            subprocess.run(
-                ['pip', 'install', '-e', '.'],
-                cwd=str(ms_swift_dir),
-                check=True,
-            )
+        # we're testing. Install from the upstream git SHA so the test
+        # reflects a fresh install of the exact commit under test —
+        # works for both main and tags (main never ships to PyPI).
+        upstream_repo = os.environ.get('UPSTREAM_REPO', 'modelscope/ms-swift')
+        install_url = f'git+https://github.com/{upstream_repo}.git@{cls.upstream_commit}'
+        subprocess.run(
+            ['pip', 'install', install_url],
+            check=True,
+        )
         if not cls.blocks:
             raise unittest.SkipTest(
                 f'No shell code blocks found in {cls.doc_path}')

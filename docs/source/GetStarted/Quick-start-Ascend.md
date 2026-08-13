@@ -1,9 +1,6 @@
 # Quick Start (Ascend NPU)
 
 10 分钟在单卡昇腾 NPU 上对 Qwen3-4B-Instruct-2507 进行自我认知微调。本文档结构与默认 [Quick Start](./Quick-start.md) **1:1 对齐**（训练 / 推理 / 推送 3 段），只是把 GPU 换成昇腾 NPU；命令/参数照搬 CUDA 版，环境变量与推理后端替换为 NPU 等价项。
-
-每个 `shell` 代码块按"做什么"和"怎么敲"组织：**`>>>` 是命令，下一行（或若干行）是真实输出**。测试可以直接 cat 一个块按顺序跑，比对每条 `>>>` 命令的实际输出和文档承诺。
-
 ## 前置条件
 
 ### 硬件
@@ -72,6 +69,20 @@ npu_count= 1
 > 如果 `npu-smi` 不存在，请回到 [Ascend 官方快速安装指南](https://ascend.github.io/docs/sources/ascend/quick_install.html) 补装驱动；如果 `import torch_npu` 失败，回到 [Ascend PyTorch 安装文档](https://gitcode.com/Ascend/pytorch) 检查 torch / torch_npu / CANN 三方兼容矩阵。
 
 ---
+
+## 安装 ms-swift
+
+```shell
+>>> pip install ms-swift -U
+Looking in indexes: http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
+Requirement already satisfied: ms-swift in /usr/local/lib/python3.11/site-packages
+...
+Successfully installed ms-swift-<x.y.z>
+>>> python -c "import swift; print('ms-swift at:', swift.__file__)"
+ms-swift at: /usr/local/lib/python3.11/site-packages/swift/__init__.py
+```
+
+> ms-swift 完整依赖（torch / torch_npu / vllm-ascend 等）由前面的 §基础软件 提供的镜像保证。如果你是**自己装**的 Python + CANN 环境，请先按 [Ascend PyTorch 安装文档](https://gitcode.com/Ascend/pytorch) 装好 torch / torch_npu，再装 ms-swift。
 
 ## 使用样例
 
