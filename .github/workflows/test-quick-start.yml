@@ -83,22 +83,21 @@ jobs:
           pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
           pip install uv
 
-      - name: Checkout fork (tests/docs/) + upstream (ms-swift)
+      - name: Checkout upstream at ${{ env.REF }}
         id: upstream-commit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.UPSTREAM_REPO }}
+          ref: ${{ env.REF }}
+          path: ms-swift
+          fetch-depth: 1
+          show-progress: false
+
+      - name: Overlay fork's tests/docs/ onto upstream
         run: |
-          # Fork repo — provides the test code under review.
-          git clone --depth 1 "https://github.com/${{ github.repository }}.git" swift-fork
-          # Upstream repo — the system under test.
-          git clone --depth 1 "https://github.com/${{ env.UPSTREAM_REPO }}.git" ms-swift
-          # Record the upstream commit we're testing.
-          cd ms-swift
-          SHA=$(git rev-parse HEAD)
-          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "Upstream commit: $SHA"
-          # Overlay the fork's tests/docs/ onto the upstream tree.
-          mkdir -p tests/docs
-          cp -r ../swift-fork/tests/docs/. tests/docs/
-          ls -la tests/docs/
+          mkdir -p ms-swift/tests/docs
+          cp -r ${{ github.workspace }}/tests/docs/. ms-swift/tests/docs/
+          ls -la ms-swift/tests/docs/
 
       - name: 跑 quick start 测试（test setUp 会装 ms-swift）
         id: test
