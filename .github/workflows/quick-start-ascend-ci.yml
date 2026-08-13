@@ -11,9 +11,13 @@ name: quick-start-ascend-ci
 # reports a change, so the NPU runner is only used when there is
 # something to verify.
 
+concurrency:
+  group: quick-start-ascend-ci
+  cancel-in-progress: true
+
 on:
   schedule:
-    - cron: '30 * * * *'
+    - cron: '0 */6 * * *'
   workflow_dispatch:
     inputs:
       force_install:
@@ -42,7 +46,7 @@ jobs:
   monitor-and-test:
     name: monitor + (test on change)
     runs-on: [linux-aarch64-a2-1]
-    timeout-minutes: 240
+    timeout-minutes: 120
     container:
       image: 'swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.3.rc2-910b-ubuntu22.04-py3.11'
       options: >-
