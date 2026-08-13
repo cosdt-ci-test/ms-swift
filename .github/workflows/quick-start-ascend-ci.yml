@@ -1,5 +1,8 @@
 name: Ascend Quick Start (NPU)
 
+# (re-parse trigger — touch the file to invalidate GitHub's workflow
+# validation cache after a syntax error fix; safe to remove later)
+
 # Single workflow that handles the Ascend Quick Start doc test:
 #   1. Every hour: lightweight monitor (hash doc / release / commit).
 #   2. If any of those change, install ms-swift from the new commit
@@ -39,7 +42,7 @@ permissions:
 env:
   UPSTREAM_REPO: ${{ vars.UPSTREAM_REPO || inputs.upstream_repo || 'modelscope/ms-swift' }}
   UPSTREAM_REF_DEFAULT: ${{ inputs.upstream_ref || 'main' }}
-  MONITORED_DOC_URL: ${{ vars.MONITORED_DOC_URL || format('https://raw.githubusercontent.com/{0}/main/docs/source/GetStarted/Quick-start-Ascend.md', env.UPSTREAM_REPO) }}
+  MONITORED_DOC_URL: ${{ vars.MONITORED_DOC_URL || 'https://raw.githubusercontent.com/cosdt-ci-test/ms-swift/main/docs/source/GetStarted/Quick-start-Ascend.md' }}
   GH_API: https://api.github.com
 
 jobs:
