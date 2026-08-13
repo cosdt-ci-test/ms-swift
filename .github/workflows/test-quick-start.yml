@@ -83,49 +83,34 @@ jobs:
           pip config set global.trusted-host cache-service.nginx-pypi-cache.svc.cluster.local
           pip install uv
 
-      - name: Checkout fork (拿 tests/docs/)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          path: swift-fork
-
-      - name: Checkout upstream @ ${{ env.REF }}
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.UPSTREAM_REPO }}
-          ref: ${{ env.REF }}
-          path: ms-swift
-          fetch-depth: 1
-
-      - name: 拿上游实际 commit SHA
+      - name: Checkout fork (tests/docs/) + upstream (ms-swift)
         id: upstream-commit
-        working-directory: ms-swift
         run: |
+          # Fork repo — provides the test code under review.
+          git clone --depth 1 "https://github.com/${{ github.repository }}.git" swift-fork
+          # Upstream repo — the system under test.
+          git clone --depth 1 "https://github.com/${{ env.UPSTREAM_REPO }}.git" ms-swift
+          # Record the upstream commit we're testing.
+          cd ms-swift
           SHA=$(git rev-parse HEAD)
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
           echo "Upstream commit: $SHA"
+          # Overlay the fork's tests/docs/ onto the upstream tree.
+          mkdir -p tests/docs
+          cp -r ../swift-fork/tests/docs/. tests/docs/
+          ls -la tests/docs/
 
-      - name: 覆盖 fork 的测试代码到上游
-        run: |
-          mkdir -p ms-swift/tests/docs
-          cp -r swift-fork/tests/docs/. ms-swift/tests/docs/
-          ls -la ms-swift/tests/docs/
-
-      - name: 装 ms-swift（NPU 依赖 + ms-swift 自身）
-        working-directory: ms-swift
-        run: |
-          export MODELSCOPE_SDK_DEBUG=True
-          export SWIFT_CI_USE_NPU=True
-          bash .dev_scripts/ci_container_test.sh
-
-      - name: 跑 quick start 测试
+      - name: 装 ms-swift 并跑测试
         id: test
         working-directory: ms-swift
         env:
+          MODELSCOPE_SDK_DEBUG: 'True'
+          SWIFT_CI_USE_NPU: 'True'
           SWIFT_NPU_E2E: '1'
           UPSTREAM_REF: ${{ env.REF }}
           UPSTREAM_COMMIT: ${{ steps.upstream-commit.outputs.sha }}
         run: |
+          bash .dev_scripts/ci_container_test.sh
           python -m unittest tests.docs.test_quick_start_ascend -v 2>&1 | tee /tmp/unittest.log
 
       - name: 汇总测试结果
@@ -139,7 +124,6 @@ jobs:
           echo "  Upstream commit:  ${{ steps.upstream-commit.outputs.sha }}"
           echo "  Trigger reason:   ${{ env.REASON }}"
           echo "------------------------------------------------------------"
-          # Pull a one-line summary out of the unittest log.
           if [ -f /tmp/unittest.log ]; then
             grep -E '^Ran [0-9]+ test' /tmp/unittest.log | tail -n 1 || true
             grep -E '^(OK|FAILED)' /tmp/unittest.log | tail -n 1 || true
