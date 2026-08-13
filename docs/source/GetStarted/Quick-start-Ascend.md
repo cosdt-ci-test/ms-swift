@@ -72,17 +72,7 @@ npu_count= 1
 
 ## 安装 ms-swift
 
-```shell
->>> pip install ms-swift -U
-Looking in indexes: http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple
-Requirement already satisfied: ms-swift in /usr/local/lib/python3.11/site-packages
-...
-Successfully installed ms-swift-<x.y.z>
->>> python -c "import swift; print('ms-swift at:', swift.__file__)"
-ms-swift at: /usr/local/lib/python3.11/site-packages/swift/__init__.py
-```
-
-> ms-swift 完整依赖（torch / torch_npu / vllm-ascend 等）由前面的 §基础软件 提供的镜像保证。如果你是**自己装**的 Python + CANN 环境，请先按 [Ascend PyTorch 安装文档](https://gitcode.com/Ascend/pytorch) 装好 torch / torch_npu，再装 ms-swift。
+ms-swift的安装请参考[安装文档](./SWIFT-installation.md)。
 
 ## 使用样例
 
