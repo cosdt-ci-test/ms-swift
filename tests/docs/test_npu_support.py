@@ -1,2 +1,0 @@
-## 测试ascend npu 的 quick start
-## 
