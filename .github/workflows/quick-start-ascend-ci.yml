@@ -97,7 +97,17 @@ jobs:
         with:
           fetch-depth: 1
 
-      # ----- monitor block (always runs) -----
+      # ----- monitor state (persisted via actions/cache, 30-day retention) -----
+      - name: Restore monitor state
+        id: cache-restore
+        if: inputs.force_install != true
+        uses: actions/cache@v4
+        with:
+          path: .monitor-state
+          key: monitor-state-${{ github.repository }}
+          restore-keys: |
+            monitor-state-${{ github.repository }}-
+
       - name: 监控 doc hash
         id: monitor-doc
         if: inputs.force_install != true
@@ -105,11 +115,13 @@ jobs:
           DOC_URL: ${{ env.MONITORED_DOC_URL }}
         run: |
           set -euo pipefail
+          STATE_DIR=".monitor-state"
+          mkdir -p "$STATE_DIR"
           echo "Monitoring: $DOC_URL"
           NEW=$(curl -fsSL --retry 3 "$DOC_URL" | sha256sum | cut -d' ' -f1)
-          OLD=$(cat .doc_hash 2>/dev/null || echo "")
+          OLD=$(cat "$STATE_DIR/.doc_hash" 2>/dev/null || echo "")
           if [ "$OLD" != "$NEW" ]; then
-            echo "$NEW" > .doc_hash
+            echo "$NEW" > "$STATE_DIR/.doc_hash"
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "ref=main" >> "$GITHUB_OUTPUT"
             echo "reason=doc" >> "$GITHUB_OUTPUT"
@@ -123,13 +135,15 @@ jobs:
         if: inputs.force_install != true
         run: |
           set -euo pipefail
+          STATE_DIR=".monitor-state"
+          mkdir -p "$STATE_DIR"
           curl -fsSL --retry 3 \
             "$GH_API/repos/${{ env.UPSTREAM_REPO }}/releases/latest" -o /tmp/release.json
           TAG=$(jq -r '.tag_name // empty' /tmp/release.json)
           SHA=$(jq -r '.target_commitish // empty' /tmp/release.json)
-          OLD=$(cat .last_release_sha 2>/dev/null || echo "")
+          OLD=$(cat "$STATE_DIR/.last_release_sha" 2>/dev/null || echo "")
           if [ -n "$SHA" ] && [ "$OLD" != "$SHA" ]; then
-            echo "$SHA" > .last_release_sha
+            echo "$SHA" > "$STATE_DIR/.last_release_sha"
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "ref=$TAG" >> "$GITHUB_OUTPUT"
             echo "reason=release" >> "$GITHUB_OUTPUT"
@@ -143,11 +157,13 @@ jobs:
         if: inputs.force_install != true
         run: |
           set -euo pipefail
+          STATE_DIR=".monitor-state"
+          mkdir -p "$STATE_DIR"
           SHA=$(curl -fsSL --retry 3 \
             "$GH_API/repos/${{ env.UPSTREAM_REPO }}/commits/main" | jq -r '.sha // empty')
-          OLD=$(cat .last_tested_sha 2>/dev/null || echo "")
+          OLD=$(cat "$STATE_DIR/.last_tested_sha" 2>/dev/null || echo "")
           if [ -n "$SHA" ] && [ "$OLD" != "$SHA" ]; then
-            echo "$SHA" > .last_tested_sha
+            echo "$SHA" > "$STATE_DIR/.last_tested_sha"
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "ref=main" >> "$GITHUB_OUTPUT"
             echo "reason=commit" >> "$GITHUB_OUTPUT"
@@ -155,6 +171,14 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           fi
           echo "main_sha=$SHA"
+
+      - name: Persist monitor state
+        if: inputs.force_install != true && always()
+        uses: actions/cache@v4
+        with:
+          path: .monitor-state
+          key: monitor-state-${{ github.repository }}-${{ github.run_id }}
+          retention-days: 30
 
       # ----- aggregate decision -----
       - name: 决定是否要跑测试
