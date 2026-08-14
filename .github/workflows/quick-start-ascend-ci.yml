@@ -1,4 +1,4 @@
-name: Ascend Quick Start (NPU)
+name: ascend-quick-start-npu
 
 # (re-parse trigger — touch the file to invalidate GitHub's workflow
 # validation cache after a syntax error fix; safe to remove later)
@@ -50,6 +50,9 @@ jobs:
     name: monitor + (test on change)
     runs-on: [linux-aarch64-a2-1]
     timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
     container:
       image: 'swr.cn-southwest-2.myhuaweicloud.com/base_image/ascend-ci/cann:8.3.rc2-910b-ubuntu22.04-py3.11'
       options: >-
