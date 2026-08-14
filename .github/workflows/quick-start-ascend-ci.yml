@@ -1,4 +1,4 @@
-name: ascend-quick-start-npu
+name: ascend-quick-start
 
 # (re-parse trigger — touch the file to invalidate GitHub's workflow
 # validation cache after a syntax error fix; safe to remove later)
